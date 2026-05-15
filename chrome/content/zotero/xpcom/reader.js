@@ -1660,8 +1660,228 @@ class ReaderInstance {
 
 	_getReadAloudRemoteInterface(targetWindow) {
 		if (!this._window) return null;
+		let localTTSEnabled = false;
+		try {
+			localTTSEnabled = !!Zotero.Prefs.get('reader.readAloudLocal.enabled');
+		}
+		catch {
+			// Ignore
+		}
 		// Wrap return values in child window Promises to avoid permissions errors
 		let audioCache = this._window.caches.open('read-aloud');
+
+		let normalizeBaseURL = (url) => {
+			url = (url || '').trim();
+			return url.replace(/\/+$/, '');
+		};
+
+		let joinURL = (baseURL, path) => {
+			baseURL = normalizeBaseURL(baseURL);
+			path = (path || '').trim();
+			if (!path) {
+				return baseURL;
+			}
+			if (!path.startsWith('/')) {
+				path = '/' + path;
+			}
+			return baseURL + path;
+		};
+
+		let buildLocalVoicesResponse = (voices) => {
+			let segmentGranularity = Zotero.Prefs.get('reader.readAloudLocal.segmentGranularity');
+			if (segmentGranularity !== 'sentence' && segmentGranularity !== 'paragraph') {
+				segmentGranularity = 'sentence';
+			}
+			let sentenceDelay = parseInt(Zotero.Prefs.get('reader.readAloudLocal.sentenceDelay'));
+			if (isNaN(sentenceDelay) || sentenceDelay < 0) {
+				sentenceDelay = 0;
+			}
+
+			let voicesMap = {};
+			let localesMap = {};
+			for (let v of voices) {
+				if (!v) continue;
+				let id = typeof v === 'string' ? v : v.id;
+				if (!id) continue;
+				let label = (typeof v === 'object' && v.label) ? v.label : id;
+				let locale = (typeof v === 'object' && v.locale) ? v.locale : Zotero.Prefs.get('reader.readAloudLocal.locale');
+				voicesMap[id] = { label };
+				localesMap[locale] ||= { default: [], other: [] };
+				if (!localesMap[locale].default.includes(id)) {
+					localesMap[locale].default.push(id);
+				}
+			}
+
+			return {
+				'self-hosted': [{
+					creditsPerMinute: 0,
+					segmentGranularity,
+					sentenceDelay,
+					voices: voicesMap,
+					locales: localesMap,
+				}],
+			};
+		};
+
+		let baseURLConfigured = !!normalizeBaseURL(Zotero.Prefs.get('reader.readAloudLocal.baseURL'));
+		if (baseURLConfigured) {
+			return {
+				// Mark as usable without Zotero account login
+				alwaysAvailable: true,
+
+				getVoices: () => {
+					return new targetWindow.Promise(async (resolve) => {
+						let result = {
+							voices: null,
+							devMode: false,
+							standardCreditsRemaining: null,
+							premiumCreditsRemaining: null,
+						};
+						// Always return at least a placeholder so 'self-hosted' appears as a tier
+						let buildPlaceholder = () => buildLocalVoicesResponse([]);
+						try {
+							let voicesJSON = Zotero.Prefs.get('reader.readAloudLocal.voicesJSON');
+							let parsed;
+							if (voicesJSON) {
+								parsed = JSON.parse(voicesJSON);
+							}
+							else if (localTTSEnabled) {
+								let baseURL = Zotero.Prefs.get('reader.readAloudLocal.baseURL');
+								let voicesPath = Zotero.Prefs.get('reader.readAloudLocal.voicesPath');
+								if (baseURL && voicesPath) {
+									let url = joinURL(baseURL, voicesPath);
+									let response = await fetch(url, { method: 'GET' });
+									if (response.ok) {
+										parsed = await response.json();
+									}
+								}
+							}
+
+							if (parsed && typeof parsed === 'object' && !Array.isArray(parsed) && (parsed.local || parsed.standard || parsed.premium)) {
+								result.voices = parsed;
+							}
+							else if (Array.isArray(parsed) && parsed.length) {
+								result.voices = buildLocalVoicesResponse(parsed);
+							}
+							else {
+								// Server unreachable or disabled -- return empty placeholder so tier is visible
+								result.voices = buildPlaceholder();
+							}
+						}
+						catch (e) {
+							Zotero.logError(e);
+							// Return placeholder on error so tier remains visible
+							result.voices = buildPlaceholder();
+						}
+						resolve(Cu.cloneInto(result, targetWindow));
+					});
+				},
+
+				getAudio: (segment, voice) => {
+					return new targetWindow.Promise(async (resolve) => {
+						let baseURL = Zotero.Prefs.get('reader.readAloudLocal.baseURL');
+						let protocol = (Zotero.Prefs.get('reader.readAloudLocal.protocol') || 'openai').toLowerCase();
+						let voiceID = voice.id;
+						let text = segment === 'sample'
+							? 'This is a sample of the selected voice.'
+							: segment.text;
+						let textHash = null;
+						try {
+							textHash = Zotero.Utilities.Internal.md5(text);
+						}
+						catch {
+							// Ignore
+						}
+
+						let cacheURL = 'https://read-aloud.zotero.invalid/audio?'
+							+ new URLSearchParams({
+								provider: 'local',
+								baseURL: normalizeBaseURL(baseURL),
+								protocol,
+								voice: voiceID,
+								textHash: textHash || '',
+								textLength: String(text.length),
+							});
+
+						let cache;
+						try {
+							cache = await audioCache;
+							let cached = await cache.match(cacheURL);
+							if (cached) {
+								resolve(Cu.cloneInto({ audio: await cached.blob() }, targetWindow));
+								return;
+							}
+						}
+						catch (e) {
+							Zotero.logError(e);
+						}
+
+						try {
+							let url;
+							let body;
+							if (protocol === 'zotero') {
+								url = joinURL(baseURL, Zotero.Prefs.get('reader.readAloudLocal.zoteroSpeakPath'));
+								body = { text, voice: voiceID };
+							}
+							else {
+								url = joinURL(baseURL, Zotero.Prefs.get('reader.readAloudLocal.openAIPath'));
+								body = {
+									model: Zotero.Prefs.get('reader.readAloudLocal.openAIModel') || 'kokoro',
+									input: text,
+									voice: voiceID,
+									response_format: Zotero.Prefs.get('reader.readAloudLocal.openAIResponseFormat') || 'wav',
+								};
+							}
+
+							let response = await fetch(url, {
+								method: 'POST',
+								headers: {
+									'Content-Type': 'application/json',
+								},
+								body: JSON.stringify(body),
+							});
+
+							if (!response.ok) {
+								resolve(Cu.cloneInto({ audio: null, error: 'unknown' }, targetWindow));
+								return;
+							}
+							let audio = await response.blob();
+							if (audio && cache) {
+								try {
+									await cache.put(cacheURL, new Response(audio));
+								}
+								catch (e) {
+									Zotero.logError(e);
+								}
+							}
+							resolve(Cu.cloneInto({ audio }, targetWindow));
+						}
+						catch (e) {
+							Zotero.logError(e);
+							resolve(Cu.cloneInto({ audio: null, error: 'network' }, targetWindow));
+						}
+					});
+				},
+
+				getCreditsRemaining: () => {
+					return new targetWindow.Promise(async (resolve) => {
+						resolve(Cu.cloneInto({
+							standardCreditsRemaining: null,
+							premiumCreditsRemaining: null,
+						}, targetWindow));
+					});
+				},
+
+				resetCredits: () => {
+					return new targetWindow.Promise(async (resolve) => {
+						resolve(Cu.cloneInto({
+							standardCreditsRemaining: null,
+							premiumCreditsRemaining: null,
+						}, targetWindow));
+					});
+				},
+			};
+		}
 		return {
 			getVoices: () => {
 				return new targetWindow.Promise(async (resolve) => {

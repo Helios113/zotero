@@ -1911,7 +1911,7 @@
 		"string": "An unknown error occurred."
 	},
 	"reader-read-aloud-error-network": {
-		"string": "Unable to connect to the Read Aloud service. Please check your internet connection."
+		"string": "Unable to connect to the Read Aloud service. Please check that your local server is running and the address and port are set correctly."
 	},
 	"reader-read-aloud-error-daily-limit-exceeded": {
 		"string": "You have exceeded your daily limit for { app-name } Voices."

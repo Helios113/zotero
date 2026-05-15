@@ -380,7 +380,7 @@ else
 	if [ $include_tests -eq 0 ]; then
 		rsync_params="--exclude /test"
 	fi
-	rsync -a $rsync_params "$SOURCE_DIR/" ./
+	rsync -aL $rsync_params "$SOURCE_DIR/" ./
 fi
 
 mv defaults defaults-z

@@ -28,6 +28,10 @@ preferences-reader-ebook-font = Ebook font:
 preferences-reader-ebook-hyphenate =
     .label = Enable automatic hyphenation
 
+preferences-reader-read-aloud-title = Read Aloud — Self-Hosted Server
+preferences-reader-read-aloud-server-url = Kokoro server URL:
+preferences-reader-read-aloud-server-url-description = URL of your local <label data-l10n-name="link">zotero-kokoro-server</label> instance. Leave blank to disable self-hosted Read Aloud.
+
 preferences-note-title = Notes
 preferences-note-open-in-new-window =
     .label = Open notes in new windows instead of tabs

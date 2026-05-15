@@ -216,6 +216,7 @@ reader-read-aloud-voice-tier = Voice Mode
 reader-read-aloud-voice-tier-local = Local
 reader-read-aloud-voice-tier-standard = Standard
 reader-read-aloud-voice-tier-premium = Premium
+reader-read-aloud-voice-tier-self-hosted = Self-Hosted
 reader-read-aloud-more-voices = More Voices…
 reader-read-aloud-language = Language
 reader-read-aloud-remaining-time = Remaining reading time
@@ -227,9 +228,12 @@ reader-read-aloud-quota-exceeded-message = <add-more-time>{ reader-read-aloud-ad
     [standard] Standard Voices
     *[local] Local Voices
 }.
+reader-read-aloud-self-hosted-unavailable = Kokoro server not running. Start it with <server-link data-l10n-name="server-link">zotero-kokoro-server</server-link> or check the project page for setup instructions.
+reader-read-aloud-self-hosted-refresh = Refresh
 reader-read-aloud-error = { general-error }
 reader-read-aloud-error-unknown = An unknown error occurred.
 reader-read-aloud-error-network = Unable to connect to the Read Aloud service. Please check your internet connection.
+reader-read-aloud-error-network-self-hosted = Unable to reach the Kokoro server. Check that it is running and that the server URL in preferences is correct.
 reader-read-aloud-error-daily-limit-exceeded = You have exceeded your daily limit for { -app-name } Voices.
 reader-read-aloud-retry = Retry
 reader-read-aloud-first-run-title = Choose your preferred Read Aloud voice:
@@ -237,6 +241,10 @@ reader-read-aloud-first-run-voice-tier-local-bullet-os-provided = Voices provide
 reader-read-aloud-first-run-voice-tier-local-bullet-offline = Available without an internet connection
 reader-read-aloud-first-run-voice-tier-local-bullet-no-account = Available without a { -app-name } account
 reader-read-aloud-first-run-voice-tier-local-bullet-free = Free to use
+reader-read-aloud-first-run-voice-tier-self-hosted-bullet-kokoro-model = Powered by a local Kokoro TTS server
+reader-read-aloud-first-run-voice-tier-self-hosted-bullet-offline = Available without an internet connection
+reader-read-aloud-first-run-voice-tier-self-hosted-bullet-no-account = Available without a { -app-name } account
+reader-read-aloud-first-run-voice-tier-self-hosted-bullet-free = Free to use
 reader-read-aloud-first-run-voice-tier-standard-bullet-natural-sounding = Natural-sounding voices
 reader-read-aloud-first-run-voice-tier-standard-bullet-online-only = Only available with an internet connection
 reader-read-aloud-first-run-voice-tier-standard-bullet-account-required = Requires a { -app-name } account

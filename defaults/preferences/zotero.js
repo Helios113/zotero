@@ -51,6 +51,35 @@ pref("extensions.zotero.trashAutoEmptyDays", 30);
 pref("extensions.zotero.viewOnDoubleClick", true);
 pref("extensions.zotero.firstRunGuidance", true);
 pref("extensions.zotero.firstRunGuidanceShown.readAloud", true);
+
+// Read Aloud -- Local TTS server (hidden prefs)
+// When enabled, Read Aloud routes audio through a local zotero-kokoro-server instance
+// (pip install zotero-kokoro-server). Defaults assume the server runs on 127.0.0.1:8880.
+// See also: chrome/content/zotero/xpcom/reader.js (_getReadAloudRemoteInterface)
+pref("extensions.zotero.reader.readAloudLocal.enabled", true);
+pref("extensions.zotero.reader.readAloudLocal.baseURL", "http://127.0.0.1:8880");
+// Supported values: "openai", "zotero"
+pref("extensions.zotero.reader.readAloudLocal.protocol", "openai");
+
+// Voice catalog
+// If set, should be either a Zotero format=2 voices response, or an array of
+// { id, label, locale } objects. If empty, Zotero falls back to a single voice
+// defined by the prefs below or tries reader.readAloudLocal.voicesPath.
+pref("extensions.zotero.reader.readAloudLocal.voicesJSON", "");
+pref("extensions.zotero.reader.readAloudLocal.voicesPath", "/v1/voices");
+pref("extensions.zotero.reader.readAloudLocal.voice", "");
+pref("extensions.zotero.reader.readAloudLocal.label", "Local TTS");
+pref("extensions.zotero.reader.readAloudLocal.locale", "en-US");
+pref("extensions.zotero.reader.readAloudLocal.segmentGranularity", "sentence");
+pref("extensions.zotero.reader.readAloudLocal.sentenceDelay", 0);
+
+// OpenAI-compatible TTS protocol
+pref("extensions.zotero.reader.readAloudLocal.openAIPath", "/v1/audio/speech");
+pref("extensions.zotero.reader.readAloudLocal.openAIModel", "kokoro");
+pref("extensions.zotero.reader.readAloudLocal.openAIResponseFormat", "wav");
+
+// Zotero-style protocol
+pref("extensions.zotero.reader.readAloudLocal.zoteroSpeakPath", "/tts/speak");
 pref("extensions.zotero.showPostUpgradeBanner", true);
 pref("extensions.zotero.showConnectorVersionWarning", true);
 

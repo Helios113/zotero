@@ -217,6 +217,27 @@
 			</vbox>
 		</groupbox>
 
+		<groupbox id="zotero-prefpane-read-aloud-groupbox" aria-labelledby="preferences-read-aloud-title">
+			<label><html:h2 id="preferences-read-aloud-title" data-l10n-id="preferences-reader-read-aloud-title"/></label>
+
+			<description data-l10n-id="preferences-reader-read-aloud-server-url-description">
+				<label is="zotero-text-link" data-l10n-name="link" href="https://github.com/helios113/zotero-kokoro-server"/>
+			</description>
+
+			<hbox align="center">
+				<label data-l10n-id="preferences-reader-read-aloud-server-url" control="read-aloud-server-url"/>
+				<html:input
+					type="text"
+					id="read-aloud-server-url"
+					style="flex: 1;"
+					placeholder="http://127.0.0.1:8880"
+					preference="extensions.zotero.reader.readAloudLocal.baseURL"
+					dir="ltr"
+					oninput="Zotero_Preferences.General.onReadAloudServerURLChange(event)"
+				/>
+			</hbox>
+		</groupbox>
+
 		<groupbox id="zotero-prefpane-note-groupbox" aria-labelledby="preferences-note-title">
 			<label><html:h2 id="preferences-note-title" data-l10n-id="preferences-note-title"/></label>
 			<checkbox id="open-note-in-new-window"

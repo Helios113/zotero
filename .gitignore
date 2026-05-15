@@ -1,6 +1,8 @@
 .DS_Store
 node_modules
 build/
+.venv/
+.venv*/
 .signatures.json
 tmp
 app/win/codesign

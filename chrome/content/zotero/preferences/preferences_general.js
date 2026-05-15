@@ -486,6 +486,12 @@ Zotero_Preferences.General = {
 		}
 	},
 	
+	onReadAloudServerURLChange: function (event) {
+		let url = event.target.value.trim();
+		Zotero.Prefs.set('reader.readAloudLocal.baseURL', url);
+		Zotero.Prefs.set('reader.readAloudLocal.enabled', url.length > 0);
+	},
+
 	onOpenURLCustomized: function () {
 		// Change resolver preference to "custom"
 		let firstItem = document.getElementById('openurl-menu').menupopup.firstChild;
